@@ -32,7 +32,7 @@ The API documentation can be found in here: [Java](https://github.wpilib.org/all
 
 ## Creating a `PhotonPoseEstimator`
 
-The PhotonPoseEstimator has a constructor that takes an `AprilTagFieldLayout` (see above), `PoseStrategy`, `PhotonCamera`, and `Transform3d`. `PoseStrategy` has six possible values:
+The PhotonPoseEstimator has a constructor that takes an `AprilTagFieldLayout` (see above), `PoseStrategy`, `PhotonCamera`, and `Transform3d`. `PoseStrategy` has nine possible values:
 
 - MULTI_TAG_PNP_ON_COPROCESSOR
     - Calculates a new robot position estimate by combining all visible tag corners. Recommended for all teams as it will be the most accurate.
@@ -113,13 +113,16 @@ The PhotonPoseEstimator has a constructor that takes an `AprilTagFieldLayout` (s
 
 ## Using a `PhotonPoseEstimator`
 
-Calling `update()` on your `PhotonPoseEstimator` will return an `EstimatedRobotPose`, which includes a `Pose3d` of the latest estimated pose (using the selected strategy) along with a `double` of the timestamp when the robot pose was estimated. You should be updating your [drivetrain pose estimator](https://docs.wpilib.org/en/latest/docs/software/advanced-controls/state-space/state-space-pose-estimators.html) with the result from the `PhotonPoseEstimator` every loop using `addVisionMeasurement()`.
+Calling `update(PhotonPipelineResult cameraResult)` on your `PhotonPoseEstimator` will return an `EstimatedRobotPose`, which includes a `Pose3d` of the latest estimated pose (using the selected strategy) along with a `double` of the timestamp when the robot pose was estimated. You should be updating your [drivetrain pose estimator](https://docs.wpilib.org/en/latest/docs/software/advanced-controls/state-space/state-space-pose-estimators.html) with the result from the `PhotonPoseEstimator` every loop using `addVisionMeasurement()`.
 
 ```{eval-rst}
 .. tab-set-code::
-   .. rli:: https://raw.githubusercontent.com/PhotonVision/photonvision/357d8a518a93f7a1f8084a79449249e613b605a7/photonlib-java-examples/apriltagExample/src/main/java/frc/robot/PhotonCameraWrapper.java
-      :language: java
-      :lines: 85-88
+   .. code-block:: Java
+
+      public Optional<EstimatedRobotPose> getEstimatedGlobalPose(PhotonPipelineResult cameraResult, Pose2d prevEstimatedRobotPose) {
+        photonPoseEstimator.setReferencePose(prevEstimatedRobotPose);
+        return photonPoseEstimator.update(cameraResult);
+      }
 
    .. code-block:: C++
 
@@ -141,7 +144,6 @@ Calling `update()` on your `PhotonPoseEstimator` will return an `EstimatedRobotP
       # Coming Soon!
 
 
-
 ```
 
 You should be updating your [drivetrain pose estimator](https://docs.wpilib.org/en/latest/docs/software/advanced-controls/state-space/state-space-pose-estimators.html) with the result from the `RobotPoseEstimator` every loop using `addVisionMeasurement()`. TODO: add example note
@@ -155,3 +157,7 @@ Updates the stored reference pose when using the CLOSEST_TO_REFERENCE_POSE strat
 ### `setLastPose(Pose3d lastPose)`
 
 Update the stored last pose. Useful for setting the initial estimate when using the CLOSEST_TO_LAST_POSE strategy.
+
+### `addHeadingData(double timestampSeconds, Rotation3d heading)`
+
+Registers timestamped robot heading data. Must be called periodically for the PNP_DISTANCE_TRIG_SOLVE and CONSTRAINED_SOLVEPNP strategies.
